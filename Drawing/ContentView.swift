@@ -7,31 +7,50 @@
 
 import SwiftUI
 
-struct Arrow: Shape {
-    let thickness: CGFloat
+struct ColorCyclingRectangle: View {
+    var amount = 0.0
+    var steps = 150
     
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
+    var body: some View {
+        ZStack {
+            ForEach(0..<steps) { value in
+                Rectangle()
+                    .inset(by: CGFloat(value))
+                    .strokeBorder(
+                        LinearGradient(
+                            gradient: Gradient(
+                                colors: [
+                                    self.color(for: value, brightness: 1),
+                                    self.color(for: value, brightness: 0)
+                                ]
+                            ),
+                            startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth:2)
+            }
+        }
+        .drawingGroup()
+    }
+    
+    func color(for value: Int, brightness: Double) -> Color {
+        var targetHue = Double(value) / Double(self.steps) + self.amount
+        if targetHue > 1 {
+            targetHue -= 1
+        }
         
-        path.addRect(CGRect(x: rect.midX - thickness * 2, y: rect.midY - thickness/2, width: thickness * 2, height: thickness))
-        path.move(to: CGPoint(x: rect.midX, y: rect.midY + thickness))
-        path.addLine(to: CGPoint(x: rect.midX + 1.5 * thickness, y: rect.midY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.midY - thickness))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.midY + thickness))
-        
-        return path
+        return Color(hue: targetHue, saturation: 1, brightness: brightness)
     }
 }
 
 struct ContentView: View {
-    @State private var thickness: CGFloat = 50.0
+    @State private var amount = 0.0
     var body: some View {
         VStack {
-            Arrow(thickness: thickness)
+            Spacer()
+            ColorCyclingRectangle(amount: amount)
+                .frame(width: 300, height: 300)
             Spacer()
             HStack {
-                Text("Thickness")
-                Slider(value: $thickness, in: 5...100)
+                Text("Amount: \(amount, specifier: "%.2f")")
+                Slider(value: $amount, in: 0...1)
             }
             .padding()
         }
