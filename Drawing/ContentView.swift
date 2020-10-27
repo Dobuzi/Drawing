@@ -7,40 +7,54 @@
 
 import SwiftUI
 
-struct Trapezoid: Shape {
-    var insetAmount: CGFloat
+struct Checkerboard: Shape {
+    var rows: Int
+    var columns: Int
     
-    var animatableData: CGFloat {
-        get { insetAmount }
-        set { self.insetAmount = newValue }
+    public var animatableData: AnimatablePair<Double, Double> {
+        get {
+            AnimatablePair(Double(rows), Double(columns))
+        }
+        
+        set {
+            self.rows = Int(newValue.first)
+            self.columns = Int(newValue.second)
+        }
     }
     
     func path(in rect: CGRect) -> Path {
         var path = Path()
         
-        path.move(to: CGPoint(x: 0, y: rect.maxY))
-        path.addLine(to: CGPoint(x: insetAmount, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX - insetAmount, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: 0, y: rect.maxY))
+        let rowSize = rect.height / CGFloat(rows)
+        let columnSize = rect.width / CGFloat(columns)
+        
+        for row in 0..<rows {
+            for col in 0..<columns {
+                if (row + col).isMultiple(of: 2) {
+                    let startX = columnSize * CGFloat(col)
+                    let startY = rowSize * CGFloat(row)
+                    
+                    let rect = CGRect(x: startX, y: startY, width: columnSize, height: rowSize)
+                    path.addRect(rect)
+                }
+            }
+        }
         
         return path
     }
 }
 
 struct ContentView: View {
-    @State private var amount: CGFloat = 50
+    @State private var rows = 4
+    @State private var columns = 4
     var body: some View {
-        VStack {
-            Trapezoid(insetAmount: amount)
-                .frame(width: 200, height: 100)
-                .onTapGesture(count: 1, perform: {
-                    withAnimation {
-                        self.amount = CGFloat.random(in: 10...90)
-                    }
-                })
-        }
-        .padding()
+        Checkerboard(rows: rows, columns: columns)
+            .onTapGesture(count: 1, perform: {
+                withAnimation(.linear(duration: 0.1)) {
+                    self.rows = 8
+                    self.columns = 16
+                }
+            })
     }
 }
 
